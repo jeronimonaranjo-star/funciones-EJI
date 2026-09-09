@@ -7,6 +7,16 @@
     branch: "main"
   };
 
+  const imageUploadConfig = {
+    directory: "img/cartelera",
+    allowedTypes: new Set(["image/jpeg", "image/png", "image/webp"]),
+    maxFileSize: 15 * 1024 * 1024,
+    maxPixels: 40_000_000,
+    maxWidth: 1200,
+    webpQuality: 0.84,
+    maxNameAttempts: 100
+  };
+
   const sectionConfigs = {
     trayectoria: {
       file: "data/trayectoria.json",
@@ -22,7 +32,7 @@
 
   const states = {
     trayectoria: { sha: "", records: [], dirty: false },
-    entradas: { sha: "", records: [], dirty: false }
+    entradas: { sha: "", records: [], dirty: false, pendingImages: new Map() }
   };
 
   const loginPanel = document.querySelector("#login-panel");
@@ -47,6 +57,7 @@
 
   let accessToken = "";
   let activeSection = "trayectoria";
+  let editorRecordSequence = 0;
 
   const setMessage = (element, message = "", type = "") => {
     element.textContent = message;
@@ -67,6 +78,9 @@
     elements.save.disabled = value;
     elements.reload.disabled = value;
     elements.add.disabled = value;
+    elements.list.querySelectorAll("input, textarea, button").forEach((control) => {
+      control.disabled = value;
+    });
   };
 
   const apiRequest = async (path, options = {}) => {
@@ -112,6 +126,18 @@
     return btoa(binary);
   };
 
+  const blobToBase64 = async (blob) => {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let binary = "";
+    const chunkSize = 32_768;
+
+    for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+    }
+
+    return btoa(binary);
+  };
+
   const localDate = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -134,6 +160,198 @@
     } catch {
       return false;
     }
+  };
+
+  const createEditorRecordId = () => `cartelera-${++editorRecordSequence}`;
+
+  const ensureEditorRecordId = (record) => {
+    if (!record._editorId) record._editorId = createEditorRecordId();
+    return record._editorId;
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const validateImageFile = (file) => {
+    if (!(file instanceof File)) throw new Error("No se pudo leer el archivo seleccionado.");
+    if (!file.size) throw new Error("La imagen seleccionada está vacía.");
+    if (file.size > imageUploadConfig.maxFileSize) {
+      throw new Error(`La imagen supera el máximo permitido de ${formatFileSize(imageUploadConfig.maxFileSize)}.`);
+    }
+
+    const extensionAllowed = /\.(?:jpe?g|png|webp)$/i.test(file.name);
+    const typeAllowed = imageUploadConfig.allowedTypes.has(file.type.toLowerCase());
+    if (!typeAllowed && !(extensionAllowed && !file.type)) {
+      throw new Error("Formato no permitido. Seleccioná una imagen JPEG, PNG o WebP.");
+    }
+  };
+
+  const revokePreviewUrl = (pendingImage) => {
+    if (pendingImage?.previewUrl) URL.revokeObjectURL(pendingImage.previewUrl);
+  };
+
+  const clearPendingImage = (editorId) => {
+    const pendingImage = states.entradas.pendingImages.get(editorId);
+    revokePreviewUrl(pendingImage);
+    states.entradas.pendingImages.delete(editorId);
+  };
+
+  const clearAllPendingImages = () => {
+    states.entradas.pendingImages.forEach(revokePreviewUrl);
+    states.entradas.pendingImages.clear();
+  };
+
+  const decodeImage = async (file) => {
+    if ("createImageBitmap" in window) {
+      try {
+        const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+        return {
+          source: bitmap,
+          width: bitmap.width,
+          height: bitmap.height,
+          cleanup: () => bitmap.close()
+        };
+      } catch {
+        try {
+          const bitmap = await createImageBitmap(file);
+          return {
+            source: bitmap,
+            width: bitmap.width,
+            height: bitmap.height,
+            cleanup: () => bitmap.close()
+          };
+        } catch {
+          // Continúa con el método compatible basado en Image.
+        }
+      }
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.decoding = "async";
+
+    try {
+      await new Promise((resolve, reject) => {
+        image.addEventListener("load", resolve, { once: true });
+        image.addEventListener("error", () => reject(new Error("El archivo no contiene una imagen válida.")), { once: true });
+        image.src = objectUrl;
+      });
+
+      return {
+        source: image,
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+        cleanup: () => URL.revokeObjectURL(objectUrl)
+      };
+    } catch (error) {
+      URL.revokeObjectURL(objectUrl);
+      throw error;
+    }
+  };
+
+  const canvasToBlob = (canvas, type, quality) => new Promise((resolve) => {
+    canvas.toBlob(resolve, type, quality);
+  });
+
+  const optimizeImage = async (file) => {
+    validateImageFile(file);
+    const decoded = await decodeImage(file);
+
+    try {
+      if (!decoded.width || !decoded.height) throw new Error("No se pudieron leer las dimensiones de la imagen.");
+      if (decoded.width * decoded.height > imageUploadConfig.maxPixels) {
+        throw new Error("La imagen tiene demasiados píxeles para procesarla de forma segura. Usá una imagen de hasta 40 megapíxeles.");
+      }
+
+      const width = Math.min(decoded.width, imageUploadConfig.maxWidth);
+      const height = Math.max(1, Math.round(decoded.height * (width / decoded.width)));
+
+      if (file.type === "image/webp" && width === decoded.width) {
+        return { blob: file, extension: "webp", width, height };
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d", { alpha: true });
+      if (!context) throw new Error("El navegador no pudo preparar la imagen.");
+
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+      context.drawImage(decoded.source, 0, 0, width, height);
+
+      const webp = await canvasToBlob(canvas, "image/webp", imageUploadConfig.webpQuality);
+      if (webp?.type === "image/webp") {
+        return { blob: webp, extension: "webp", width, height };
+      }
+
+      const fallbackType = file.type === "image/png" ? "image/png" : "image/jpeg";
+      const fallback = await canvasToBlob(canvas, fallbackType, fallbackType === "image/jpeg" ? 0.88 : undefined);
+      if (!fallback) throw new Error("El navegador no pudo convertir la imagen.");
+      return {
+        blob: fallback,
+        extension: fallbackType === "image/png" ? "png" : "jpg",
+        width,
+        height
+      };
+    } finally {
+      decoded.cleanup();
+    }
+  };
+
+  const slugify = (value) => value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60) || "funcion";
+
+  const encodeRepositoryPath = (path) => path.split("/").map(encodeURIComponent).join("/");
+
+  const remoteFileExists = async (path) => {
+    const encodedPath = encodeRepositoryPath(path);
+    try {
+      await apiRequest(`/repos/${repository.owner}/${repository.name}/contents/${encodedPath}?ref=${repository.branch}`);
+      return true;
+    } catch (error) {
+      if (error.status === 404) return false;
+      throw error;
+    }
+  };
+
+  const findAvailableImagePath = async (record, extension) => {
+    const baseName = `${slugify(record.titulo)}-${record.fecha}`;
+
+    for (let attempt = 1; attempt <= imageUploadConfig.maxNameAttempts; attempt += 1) {
+      const suffix = attempt === 1 ? "" : `-${attempt}`;
+      const path = `${imageUploadConfig.directory}/${baseName}${suffix}.${extension}`;
+      if (!(await remoteFileExists(path))) return path;
+    }
+
+    throw new Error("No se encontró un nombre libre para la imagen. Cambiá el título o la fecha e intentá nuevamente.");
+  };
+
+  const uploadImage = async (path, blob) => {
+    const encodedPath = encodeRepositoryPath(path);
+    const fileName = path.split("/").pop();
+    const result = await apiRequest(`/repos/${repository.owner}/${repository.name}/contents/${encodedPath}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: `Agrega imagen de cartelera: ${fileName}`,
+        content: await blobToBase64(blob),
+        branch: repository.branch
+      })
+    });
+
+    if (!result.content?.sha) {
+      throw new Error("GitHub no confirmó la subida de la imagen. No se guardó la cartelera.");
+    }
+
+    return result;
   };
 
   const explainError = (error) => {
@@ -213,6 +431,172 @@
     return wrapper;
   };
 
+  const currentImagePreviewUrl = (path) => {
+    if (!path) return "";
+    try {
+      if (/^https?:\/\//i.test(path)) return new URL(path).href;
+      return new URL(`../${path.replace(/^\/+/, "")}`, window.location.href).href;
+    } catch {
+      return "";
+    }
+  };
+
+  const createImagePreview = (labelText, source, altText, emptyText) => {
+    const preview = document.createElement("div");
+    preview.className = "image-preview-block";
+
+    const label = document.createElement("span");
+    label.className = "image-preview-label";
+    label.textContent = labelText;
+    preview.append(label);
+
+    if (!source) {
+      const empty = document.createElement("span");
+      empty.className = "image-preview-empty";
+      empty.textContent = emptyText;
+      preview.append(empty);
+      return preview;
+    }
+
+    const frame = document.createElement("div");
+    frame.className = "image-preview-frame";
+    const image = document.createElement("img");
+    image.src = source;
+    image.alt = altText;
+    image.addEventListener("error", () => {
+      frame.classList.add("image-preview-error");
+      frame.textContent = "No se pudo mostrar la vista previa.";
+    }, { once: true });
+    frame.append(image);
+    preview.append(frame);
+    return preview;
+  };
+
+  const createImageUploadField = (item, index) => {
+    const key = "entradas";
+    const editorId = ensureEditorRecordId(item);
+    const pendingImage = states.entradas.pendingImages.get(editorId);
+    const currentPath = pendingImage ? pendingImage.previousPath : item.imagen;
+    const wrapper = document.createElement("div");
+    wrapper.className = "admin-field image-upload-field span-full";
+
+    const previews = document.createElement("div");
+    previews.className = "image-preview-grid";
+    previews.append(createImagePreview(
+      "Imagen actual",
+      currentImagePreviewUrl(currentPath),
+      item.imagenAlt || "Imagen actual de la función",
+      "Esta función todavía no tiene imagen."
+    ));
+
+    if (pendingImage) {
+      const newLabel = pendingImage.uploadedPath ? "Imagen subida; falta guardar la cartelera" : "Nueva imagen";
+      previews.append(createImagePreview(
+        newLabel,
+        pendingImage.previewUrl,
+        `Vista previa de ${pendingImage.file.name}`,
+        ""
+      ));
+    }
+
+    const controls = document.createElement("div");
+    controls.className = "image-upload-controls";
+    const inputId = `entradas-imagen-archivo-${index}`;
+    const fileInput = document.createElement("input");
+    fileInput.id = inputId;
+    fileInput.className = "visually-hidden-file";
+    fileInput.type = "file";
+    fileInput.tabIndex = -1;
+    fileInput.accept = "image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp";
+
+    const selectButton = document.createElement("button");
+    selectButton.className = "admin-button secondary file-select-button";
+    selectButton.type = "button";
+    selectButton.textContent = pendingImage ? "Elegir otra imagen" : "Seleccionar imagen";
+    selectButton.addEventListener("click", () => fileInput.click());
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+
+      try {
+        validateImageFile(file);
+        const previousPending = states.entradas.pendingImages.get(editorId);
+        const previewUrl = URL.createObjectURL(file);
+        const previousPath = previousPending ? previousPending.previousPath : item.imagen;
+        const previouslyUploadedPath = previousPending?.uploadedPath || "";
+        revokePreviewUrl(previousPending);
+        states.entradas.pendingImages.set(editorId, {
+          file,
+          previewUrl,
+          previousPath,
+          uploadedPath: ""
+        });
+        setDirty(key, true);
+        renderSection(key);
+
+        const orphanNotice = previouslyUploadedPath
+          ? ` La imagen ${previouslyUploadedPath} ya había sido subida y no se borrará automáticamente.`
+          : "";
+        setSectionMessage(key, `Imagen seleccionada: ${file.name} (${formatFileSize(file.size)}). Se optimizará al guardar.${orphanNotice}`);
+      } catch (error) {
+        fileInput.value = "";
+        setSectionMessage(key, error.message, "error");
+      }
+    });
+
+    controls.append(fileInput, selectButton);
+
+    if (pendingImage) {
+      const discardButton = document.createElement("button");
+      discardButton.className = "admin-button secondary";
+      discardButton.type = "button";
+      discardButton.textContent = "Descartar imagen nueva";
+      discardButton.addEventListener("click", () => {
+        const uploadedPath = pendingImage.uploadedPath;
+        item.imagen = pendingImage.previousPath;
+        clearPendingImage(editorId);
+        setDirty(key, true);
+        renderSection(key);
+        setSectionMessage(
+          key,
+          uploadedPath
+            ? `Se descartó el cambio de imagen. El archivo ${uploadedPath} seguirá en el repositorio y no se borró automáticamente.`
+            : "Se descartó la imagen nueva; se mantendrá la imagen actual."
+        );
+      });
+      controls.append(discardButton);
+    }
+
+    const help = document.createElement("p");
+    help.className = "field-help image-upload-help";
+    help.textContent = "JPEG, PNG o WebP · máximo 15 MB · se ajusta a 1200 px de ancho y se convierte preferentemente a WebP.";
+    controls.append(help);
+
+    if (currentPath) {
+      const path = document.createElement("p");
+      path.className = "image-path";
+      path.append("Ruta actual: ");
+      const code = document.createElement("code");
+      code.textContent = currentPath;
+      path.append(code);
+      controls.append(path);
+    }
+
+    if (pendingImage?.uploadedPath) {
+      const uploadedPath = document.createElement("p");
+      uploadedPath.className = "image-path uploaded";
+      uploadedPath.append("Archivo ya subido: ");
+      const code = document.createElement("code");
+      code.textContent = pendingImage.uploadedPath;
+      uploadedPath.append(code);
+      controls.append(uploadedPath);
+    }
+
+    wrapper.append(previews, controls);
+    return wrapper;
+  };
+
   const createDeleteButton = (key, index, description) => {
     const button = document.createElement("button");
     button.className = "delete-button";
@@ -221,6 +605,7 @@
     button.setAttribute("aria-label", `Eliminar ${description}`);
     button.addEventListener("click", () => {
       if (!window.confirm(`¿Eliminar esta función?\n\n${description}`)) return;
+      if (key === "entradas") clearPendingImage(states[key].records[index]._editorId);
       states[key].records.splice(index, 1);
       setDirty(key, true);
       setSectionMessage(key);
@@ -292,7 +677,7 @@
         createField({ key, index, labelText: "Texto adicional", name: "detalle", value: item.detalle, textarea: true, className: "span-full" }),
         createField({ key, index, labelText: "Link de Google Maps", name: "mapaUrl", value: item.mapaUrl, type: "url", className: "span-2" }),
         createField({ key, index, labelText: "Link de compra de entradas", name: "entradasUrl", value: item.entradasUrl, type: "url", className: "span-2" }),
-        createField({ key, index, labelText: "Ruta de la imagen", name: "imagen", value: item.imagen, className: "span-2" }),
+        createImageUploadField(item, index),
         createField({ key, index, labelText: "Descripción de la imagen", name: "imagenAlt", value: item.imagenAlt, className: "span-2" })
       );
 
@@ -334,7 +719,10 @@
       if (!record.entradasTexto.trim()) validationError(key, index, "entradasTexto", "completá el texto de entradas, por ejemplo “Comprar entradas” o “Entrada libre y gratuita”.");
       if (!isValidWebUrl(record.mapaUrl.trim())) validationError(key, index, "mapaUrl", "el link de Google Maps debe comenzar con http:// o https://.");
       if (!isValidWebUrl(record.entradasUrl.trim())) validationError(key, index, "entradasUrl", "el link de compra debe comenzar con http:// o https://.");
-      if (record.imagen.trim() && !record.imagenAlt.trim()) validationError(key, index, "imagenAlt", "describí la imagen para quienes usan lectores de pantalla.");
+      const hasPendingImage = states.entradas.pendingImages.has(ensureEditorRecordId(record));
+      if ((record.imagen.trim() || hasPendingImage) && !record.imagenAlt.trim()) {
+        validationError(key, index, "imagenAlt", "describí la imagen para quienes usan lectores de pantalla.");
+      }
     });
   };
 
@@ -348,7 +736,12 @@
       throw new Error(`El archivo ${config.file} tiene un formato inesperado.`);
     }
 
-    states[key].records = data.funciones.map((record) => normalizeRecord(key, record));
+    if (key === "entradas") clearAllPendingImages();
+    states[key].records = data.funciones.map((record) => {
+      const normalized = normalizeRecord(key, record);
+      if (key === "entradas") ensureEditorRecordId(normalized);
+      return normalized;
+    });
     states[key].sha = file.sha;
     sortRecords(key);
     setDirty(key, false);
@@ -378,20 +771,49 @@
       return;
     }
 
-    states[key].records = sanitizeRecords(key);
-    sortRecords(key);
-
     const config = sectionConfigs[key];
-    const content = `${JSON.stringify({ funciones: states[key].records }, null, 2)}\n`;
     const path = `/repos/${repository.owner}/${repository.name}/contents/${config.file}`;
     const saveButton = sectionElements[key].save;
     const originalLabel = saveButton.textContent;
+    const pendingRecords = key === "entradas"
+      ? states.entradas.records
+          .map((record) => ({
+            record,
+            pendingImage: states.entradas.pendingImages.get(ensureEditorRecordId(record))
+          }))
+          .filter(({ pendingImage }) => pendingImage)
+      : [];
 
     setBusy(key, true);
     saveButton.textContent = "Guardando…";
-    setSectionMessage(key, "Guardando cambios…");
+    setSectionMessage(key, pendingRecords.length ? "Procesando imagen…" : "Guardando función…");
 
     try {
+      for (let index = 0; index < pendingRecords.length; index += 1) {
+        const { record, pendingImage } = pendingRecords[index];
+        if (pendingImage.uploadedPath) {
+          record.imagen = pendingImage.uploadedPath;
+          continue;
+        }
+
+        setSectionMessage(key, `Procesando imagen ${index + 1} de ${pendingRecords.length}…`);
+        const optimized = await optimizeImage(pendingImage.file);
+        const imagePath = await findAvailableImagePath(record, optimized.extension);
+        setSectionMessage(key, `Subiendo imagen ${index + 1} de ${pendingRecords.length}…`);
+        await uploadImage(imagePath, optimized.blob);
+        pendingImage.uploadedPath = imagePath;
+        record.imagen = imagePath;
+      }
+
+      const recordsToSave = sanitizeRecords(key);
+      const direction = key === "trayectoria" ? -1 : 1;
+      recordsToSave.sort((a, b) => (
+        direction * a.fecha.localeCompare(b.fecha) ||
+        (a.hora || "").localeCompare(b.hora || "")
+      ));
+      const content = `${JSON.stringify({ funciones: recordsToSave }, null, 2)}\n`;
+      setSectionMessage(key, "Guardando función…");
+
       const result = await apiRequest(path, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -407,12 +829,37 @@
         throw new Error("GitHub guardó una respuesta incompleta. Volvé a cargar la sección antes de realizar otro cambio.");
       }
 
+      if (key === "entradas") clearAllPendingImages();
+      states[key].records = recordsToSave.map((record) => {
+        if (key === "entradas") ensureEditorRecordId(record);
+        return record;
+      });
       states[key].sha = result.content.sha;
       setDirty(key, false);
       renderSection(key);
-      setSectionMessage(key, config.savedMessage, "success");
+      setSectionMessage(key, key === "entradas" ? "Guardado correctamente." : config.savedMessage, "success");
     } catch (error) {
-      setSectionMessage(key, explainError(error), "error");
+      const uploadedPaths = pendingRecords
+        .map(({ pendingImage }) => pendingImage.uploadedPath)
+        .filter(Boolean);
+
+      if (uploadedPaths.length) {
+        renderSection(key);
+        const files = uploadedPaths.map((uploadedPath) => `“${uploadedPath}”`).join(", ");
+        const uploadedSubject = uploadedPaths.length === 1
+          ? "La imagen ya quedó subida"
+          : "Las imágenes ya quedaron subidas";
+        const recovery = error.status === 409
+          ? "Para proteger los cambios remotos, recargá la sección y aplicá nuevamente tus cambios. Los archivos subidos no se borrarán automáticamente."
+          : "Podés volver a intentar: las imágenes ya subidas no se cargarán otra vez.";
+        setSectionMessage(
+          key,
+          `${explainError(error)} ${uploadedSubject} como ${files}, pero la cartelera no se guardó. ${recovery}`,
+          "error"
+        );
+      } else {
+        setSectionMessage(key, explainError(error), "error");
+      }
     } finally {
       setBusy(key, false);
       saveButton.textContent = originalLabel;
@@ -460,6 +907,7 @@
         state.records = [];
         state.dirty = false;
       });
+      clearAllPendingImages();
       setMessage(loginStatus, explainError(error), "error");
       tokenInput.focus();
     } finally {
@@ -502,6 +950,8 @@
             imagenAlt: ""
           };
 
+      if (key === "entradas") ensureEditorRecordId(emptyRecord);
+
       states[key].records.unshift(emptyRecord);
       setDirty(key, true);
       setSectionMessage(key, "Nueva función agregada. Completá sus datos y guardá los cambios.");
@@ -519,6 +969,7 @@
     if (hasUnsavedChanges && !window.confirm("Hay cambios sin guardar. ¿Querés salir y descartarlos?")) return;
 
     accessToken = "";
+    clearAllPendingImages();
     Object.values(states).forEach((state) => {
       state.sha = "";
       state.records = [];

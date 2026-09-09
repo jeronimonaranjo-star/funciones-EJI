@@ -394,6 +394,99 @@
   grid-column: 1 / -1;
 }
 
+.image-upload-field {
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, .018);
+}
+
+.image-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.image-preview-block {
+  min-width: 0;
+}
+
+.image-preview-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: .875rem;
+  font-weight: 700;
+}
+
+.image-preview-frame,
+.image-preview-empty {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  background: var(--bg);
+  color: var(--muted);
+  text-align: center;
+}
+
+.image-preview-frame {
+  overflow: hidden;
+}
+
+.image-preview-frame img {
+  display: block;
+  width: 100%;
+  height: 220px;
+  object-fit: contain;
+}
+
+.image-preview-error {
+  padding: 20px;
+  color: #ff9e91;
+}
+
+.image-upload-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.visually-hidden-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.image-upload-help,
+.image-path {
+  flex-basis: 100%;
+  margin: 0 !important;
+}
+
+.image-path {
+  color: var(--muted);
+  font-size: .825rem;
+  overflow-wrap: anywhere;
+}
+
+.image-path.uploaded {
+  color: #9be1a5;
+}
+
+.image-path code {
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+}
+
 .delete-button {
   min-height: 48px;
   padding: 10px 13px;
@@ -485,6 +578,10 @@
 
   .trajectory-card,
   .field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .image-preview-grid {
     grid-template-columns: 1fr;
   }
 
