@@ -28,39 +28,17 @@
     <h1 class="page-title">Próximas funciones</h1>
     <p class="page-intro">Conocé las próximas presentaciones de El Juego Infinito.</p>
 
-    <article class="ticket-card">
-      <div class="ticket-info">
-        <div class="kicker">Luego</div>
-        <h2>Nosferatu (1922)</h2>
-        <p>
-          Cementerio Británico · Av. Elcano 4568, CABA<br>
-          Domingo 6 de septiembre · 19 hs y 21 hs<br>
-          Una hora antes de cada función se podrá realizar una visita guiada por los sepulcros<br>
-          <a href="https://maps.google.com/?q=Av.+Elcano+4568,+Buenos+Aires" target="_blank" rel="noopener">📍 Ver en Google Maps</a>
-        </p>
-        <a class="button" href="https://panel.alternativateatral.com/obra101277-nosferatu-1922-con-musica-en-vivo-en-el-cementerio-britanico" target="_blank" rel="noopener">
-          Comprar entradas
-        </a>
-      </div>
-      <div class="ticket-image">
-        <img src="img/nosferatu-cementerio.png" alt="Flyer de Nosferatu en el Cementerio Británico">
-      </div>
-    </article>
-
-    <article class="ticket-card">
-      <div class="ticket-info">
-        <div class="kicker">Luego</div>
-        <h2>El maquinista de La General</h2>
-        <p>Universidad Nacional de General Sarmiento · Juan María Gutiérrez 1150, Los Polvorines<br>Sábado 12 de septiembre · 18 hs<br><a href="https://maps.google.com/?q=Juan+Mar%C3%ADa+Guti%C3%A9rrez+1150,+Los+Polvorines" target="_blank" rel="noopener">📍 Ver en Google Maps</a><br>Entrada libre y gratuita</p>
-      </div>
-      <div class="ticket-image">
-        <img src="img/flyer-maquinista.jpg" alt="Flyer de El maquinista de La General en UNGS">
-      </div>
-    </article>
+    <div id="ticket-list" class="ticket-list" aria-live="polite">
+      <p class="ticket-message">Cargando próximas funciones…</p>
+    </div>
+    <noscript>
+      <p class="ticket-message">Activá JavaScript para ver las próximas funciones.</p>
+    </noscript>
   </section>
 </main>
 
 <footer class="footer">© 2026 El Juego Infinito · Música en vivo para cine mudo</footer>
+<script src="js/entradas.js?v=2"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

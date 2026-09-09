@@ -309,6 +309,13 @@ main {
   font-style: italic;
 }
 
+.timeline-message {
+  margin: 0;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+}
+
 .gallery-section {
   margin-top: 54px;
 }
@@ -391,6 +398,18 @@ main {
   background: var(--bg-card);
   box-shadow: var(--shadow);
   overflow: hidden;
+}
+
+.ticket-card.without-image {
+  grid-template-columns: 1fr;
+}
+
+.ticket-message {
+  margin: 0;
+  padding: 28px 0;
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
 }
 
 .ticket-info {

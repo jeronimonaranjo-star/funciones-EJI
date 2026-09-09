@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://api.github.com; font-src https://fonts.gstatic.com; style-src 'self' https://fonts.googleapis.com; img-src 'self' data:; script-src 'self'; base-uri 'none'; form-action 'self'">
+  <title>Administración — El Juego Infinito</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <a class="admin-brand" href="../index.html" aria-label="Volver al sitio de El Juego Infinito">
+      <span>El Juego Infinito</span>
+      <small>Administración</small>
+    </a>
+    <a class="admin-public-link" href="../index.html">Ver sitio público</a>
+  </header>
+
+  <main class="admin-main">
+    <section class="admin-intro">
+      <div>
+        <div class="kicker">Administración</div>
+        <h1>Contenido del sitio</h1>
+        <p>Editá la trayectoria y la cartelera desde un mismo lugar. Cada sección se guarda de forma independiente.</p>
+      </div>
+      <div id="connection-state" class="connection-state" hidden>
+        <span class="connection-dot" aria-hidden="true"></span>
+        Sesión activa
+        <button id="logout-button" class="text-button" type="button">Salir</button>
+      </div>
+    </section>
+
+    <section id="login-panel" class="admin-panel login-panel">
+      <div>
+        <h2>Ingresar al editor</h2>
+        <p>Usá una clave de acceso de GitHub limitada únicamente a este sitio. La clave se mantiene en memoria durante esta sesión y se borra al cerrar o recargar la página.</p>
+      </div>
+      <form id="login-form" class="login-form">
+        <label for="access-token">Clave de acceso</label>
+        <div class="token-row">
+          <input id="access-token" name="access-token" type="password" autocomplete="off" spellcheck="false" required aria-describedby="token-help">
+          <button class="admin-button" type="submit">Ingresar</button>
+        </div>
+        <p id="token-help" class="field-help">La clave necesita permiso de lectura y escritura sobre el contenido del repositorio <strong>funciones-EJI</strong>.</p>
+      </form>
+      <div id="login-status" class="status-message login-status" role="status" aria-live="polite"></div>
+      <details class="setup-help">
+        <summary>Cómo crear la clave por primera vez</summary>
+        <ol>
+          <li>Abrí <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">GitHub · Nueva clave específica</a>.</li>
+          <li>Elegí solo el repositorio <strong>funciones-EJI</strong>.</li>
+          <li>En permisos del repositorio, activá <strong>Contents: Read and write</strong>.</li>
+          <li>Elegí una fecha de vencimiento breve, generá la clave y guardala en tu administrador de contraseñas.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section id="editor-panel" class="editor-panel" hidden>
+      <div class="section-tabs" role="tablist" aria-label="Secciones editables">
+        <button id="trayectoria-tab" class="section-tab active" type="button" role="tab" aria-selected="true" aria-controls="trayectoria-editor" data-section="trayectoria">Trayectoria</button>
+        <button id="entradas-tab" class="section-tab" type="button" role="tab" aria-selected="false" aria-controls="entradas-editor" data-section="entradas">Entradas / Cartelera</button>
+      </div>
+
+      <section id="trayectoria-editor" class="section-editor" role="tabpanel" aria-labelledby="trayectoria-tab" data-section-panel="trayectoria">
+        <div class="section-heading">
+          <div>
+            <h2>Trayectoria</h2>
+            <p>Las funciones se muestran de la más reciente a la más antigua.</p>
+          </div>
+          <a href="../trayectoria.html" target="_blank" rel="noopener">Ver página pública</a>
+        </div>
+        <div class="editor-toolbar">
+          <div>
+            <strong id="trayectoria-count">0 funciones</strong>
+            <span id="trayectoria-dirty" class="dirty-state" hidden>Cambios sin guardar</span>
+          </div>
+          <div class="toolbar-actions">
+            <button id="trayectoria-reload" class="admin-button secondary" type="button">Volver a cargar</button>
+            <button id="trayectoria-add" class="admin-button secondary" type="button">+ Nueva función</button>
+            <button id="trayectoria-save" class="admin-button" type="button">Guardar trayectoria</button>
+          </div>
+        </div>
+        <div id="trayectoria-status" class="status-message" role="status" aria-live="polite"></div>
+        <div id="trayectoria-list" class="record-list"></div>
+      </section>
+
+      <section id="entradas-editor" class="section-editor" role="tabpanel" aria-labelledby="entradas-tab" data-section-panel="entradas" hidden>
+        <div class="section-heading">
+          <div>
+            <h2>Entradas / Cartelera</h2>
+            <p>Las funciones se muestran en orden cronológico, empezando por la fecha más próxima.</p>
+          </div>
+          <a href="../entradas.html" target="_blank" rel="noopener">Ver página pública</a>
+        </div>
+        <div class="editor-toolbar">
+          <div>
+            <strong id="entradas-count">0 funciones</strong>
+            <span id="entradas-dirty" class="dirty-state" hidden>Cambios sin guardar</span>
+          </div>
+          <div class="toolbar-actions">
+            <button id="entradas-reload" class="admin-button secondary" type="button">Volver a cargar</button>
+            <button id="entradas-add" class="admin-button secondary" type="button">+ Nueva función</button>
+            <button id="entradas-save" class="admin-button" type="button">Guardar cartelera</button>
+          </div>
+        </div>
+        <div id="entradas-status" class="status-message" role="status" aria-live="polite"></div>
+        <div id="entradas-list" class="record-list ticket-editor-list"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

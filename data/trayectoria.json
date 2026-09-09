@@ -1,0 +1,194 @@
+{
+  "funciones": [
+    {
+      "fecha": "2026-12-12",
+      "lugar": "C.C. Mares",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2026-11-08",
+      "lugar": "C.C. Morán",
+      "obra": "El maquinista de La General (Buster Keaton)"
+    },
+    {
+      "fecha": "2026-11-01",
+      "lugar": "La Banshee",
+      "obra": "El fantasma de la ópera"
+    },
+    {
+      "fecha": "2026-10-31",
+      "lugar": "C. C. Mares",
+      "obra": "Nosferatu"
+    },
+    {
+      "fecha": "2026-10-30",
+      "lugar": "Cine York, Vicente López",
+      "obra": "Nosferatu"
+    },
+    {
+      "fecha": "2026-10-10",
+      "lugar": "La Mula Cine Club",
+      "obra": "Nosferatu"
+    },
+    {
+      "fecha": "2026-10-02",
+      "lugar": "Sala Lúcida",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2026-09-24",
+      "lugar": "San Fernando",
+      "obra": "Escher music"
+    },
+    {
+      "fecha": "2026-09-22",
+      "lugar": "Teatro Empire",
+      "obra": "El maquinista de La General (Buster Keaton)"
+    },
+    {
+      "fecha": "2026-09-18",
+      "lugar": "C.C. Marechal",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2026-09-12",
+      "lugar": "Universidad Nacional de General Sarmiento (UNGS)",
+      "obra": "El maquinista de La General (Buster Keaton)"
+    },
+    {
+      "fecha": "2026-09-06",
+      "lugar": "Cementerio Británico",
+      "obra": "Nosferatu"
+    },
+    {
+      "fecha": "2026-08-09",
+      "lugar": "C.C. Morán",
+      "obra": "Nosferatu"
+    },
+    {
+      "fecha": "2026-07-21",
+      "lugar": "Teatro Empire",
+      "obra": "Metropolis"
+    },
+    {
+      "fecha": "2026-06-20",
+      "lugar": "Teatro Empire",
+      "obra": "El maquinista (Buster Keaton)"
+    },
+    {
+      "fecha": "2026-06-04",
+      "lugar": "C.C. Matienzo",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2026-05-25",
+      "lugar": "Teatro Empire",
+      "obra": "Nobleza Gaucha"
+    },
+    {
+      "fecha": "2026-05-24",
+      "lugar": "Cine Teatro Helios, Palomar",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2026-05-14",
+      "lugar": "Teatro Empire",
+      "obra": "Metropolis"
+    },
+    {
+      "fecha": "2026-04-18",
+      "lugar": "Cine York, Vicente López",
+      "obra": "The General (Buster Keaton)"
+    },
+    {
+      "fecha": "2026-04-11",
+      "lugar": "Teatro Marechal, Moreno",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2026-04-07",
+      "lugar": "Teatro Empire, CABA",
+      "obra": "Metropolis"
+    },
+    {
+      "fecha": "2026-04-04",
+      "lugar": "Teatro Municipal de Quilmes",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2026-03-28",
+      "lugar": "Espacio POMO, CABA",
+      "obra": "The General (Buster Keaton)"
+    },
+    {
+      "fecha": "2026-03-07",
+      "lugar": "La Mula Club de Cine, Metauro, CABA",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2026-03-03",
+      "lugar": "Teatro Empire, CABA",
+      "obra": "Metropolis"
+    },
+    {
+      "fecha": "2026-02-27",
+      "lugar": "Teatro Otamendi, San Fernando",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2026-02-25",
+      "lugar": "Moran Cultural, CABA",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2025-12-11",
+      "lugar": "CDCA San Telmo, CABA",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2025-11-15",
+      "lugar": "Una Casa en Chacarita, CABA",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2025-10-31",
+      "lugar": "Universidad Nacional de Quilmes",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2025-10-19",
+      "lugar": "Cine York, Olivos",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2025-09-29",
+      "lugar": "UNICEN, Tandil",
+      "obra": "Cortos experimentales"
+    },
+    {
+      "fecha": "2025-09-27",
+      "lugar": "Casa de la Palmera, Tandil",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2025-09-04",
+      "lugar": "Biblioteca Nacional, Auditorio Jorge Luis Borges, CABA",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2025-06-13",
+      "lugar": "Espacio Ek', CABA",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2025-04-11",
+      "lugar": "La Termomecánica, CABA",
+      "obra": "El gabinete del Dr. Caligari"
+    },
+    {
+      "fecha": "2024-12-15",
+      "lugar": "Estudio Pomeranec, CABA",
+      "obra": "El gabinete del Dr. Caligari"
+    }
+  ]
+}
