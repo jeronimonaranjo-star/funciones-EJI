@@ -1,17 +1,17 @@
 {
   "funciones": [
     {
-      "fecha": "2026-09-12",
-      "hora": "18 hs",
-      "titulo": "El maquinista de La General",
-      "etiqueta": "Luego",
-      "lugar": "Universidad Nacional de General Sarmiento",
-      "direccion": "Juan María Gutiérrez 1150",
-      "ciudad": "Los Polvorines",
-      "detalle": "",
+      "fecha": "2026-09-22",
+      "hora": "20 hs",
+      "titulo": "El maquinista (Buster Keaton)",
+      "etiqueta": "",
+      "lugar": "Teatro Empire",
+      "direccion": "Irigoyen 1934",
+      "ciudad": "Buenos Aires",
+      "detalle": "El Juego Infinito musicalizará en vivo es obra maestra del cine. Sami Abadi (Violin), Hernán Kerlleñevich (Sintetizador), Rosa Nolly (Saxo), Jerónimo Naranjo (Guitarra)",
       "mapaUrl": "https://maps.google.com/?q=Juan+Mar%C3%ADa+Guti%C3%A9rrez+1150,+Los+Polvorines",
-      "entradasUrl": "",
-      "entradasTexto": "Entrada libre y gratuita",
+      "entradasUrl": "https://publico.alternativateatral.com/entradas100570-el-maquinista-de-la-general?o=14",
+      "entradasTexto": ".",
       "imagen": "img/flyer-maquinista.jpg",
       "imagenAlt": "Flyer de El maquinista de La General en UNGS"
     },
