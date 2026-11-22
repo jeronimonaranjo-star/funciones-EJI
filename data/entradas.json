@@ -14,6 +14,21 @@
       "entradasTexto": "Comprar entradas",
       "imagen": "img/cartelera/metropolis-con-musica-en-vivo-2026-11-26.webp",
       "imagenAlt": "Metropolis"
+    },
+    {
+      "fecha": "2026-12-12",
+      "hora": "21hs",
+      "titulo": "El gabinete del Dr Caligari",
+      "etiqueta": "Luego",
+      "lugar": "C.C. Mares",
+      "direccion": "El Salvador 5958",
+      "ciudad": "CABA",
+      "detalle": "Esta película muda dirigida por Robert Wiene es la obra cumbre del expresionismos alemán.\nEn esta ocación será musicalizada en vivo por el ensamble \"El Juego Infinito\". Mediante improvisaciones y reacciones en vivo, el grupo va reinterpretando y acompañando el film con sonoridades y texturas alusivas. En esta oportunidad se proyectará en pantalla gigante en el Centro Cultural Mares. Se recomiendo llegar puntual para poder ubicarse y hacer su pedido en la barra.",
+      "mapaUrl": "https://maps.app.goo.gl/h6JzWDLHzyTX7jFu7",
+      "entradasUrl": "https://citritickets.com.ar/e/VCQ9B254",
+      "entradasTexto": "Comprar entradas",
+      "imagen": "img/cartelera/el-gabinete-del-dr-caligari-2026-12-12.webp",
+      "imagenAlt": "El gabinete del Dr Caligari"
     }
   ]
 }
